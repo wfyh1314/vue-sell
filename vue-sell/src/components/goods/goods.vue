@@ -10,6 +10,7 @@
 				</li>
 			</ul>
 		</div>
+
 		<div class="foods-wrapper" ref="foodsWrapper">
 			<ul>
 				<li v-for="item in goods" class="food-list food-list-hook">
@@ -30,26 +31,40 @@
 									<span class="now">￥{{food.price}}</span>
 									<span class="old" v-show="food.oldPrice">￥{{food.oldPrice}}</span>
 								</div>
+								<div class="cartcontrol-wrapper">
+									<cartcontrol :food="food"></cartcontrol>
+								</div>
 							</div>
 						</li>
 					</ul>
 				</li>
 			</ul>
 		</div>
+		<shopcart :delivery-price="seller.deliveryPrice" 
+		:min-price="seller.minPrice"></shopcart>
 	</div>
 </template>
 <script>
+import shopcart from '../shopcart/shopcart'
+import cartcontrol from '../cartcontrol/cartcontrol'
 import BScroll from 'better-scroll'
+
+//import star from '../star/star'
 const ERR_OK = 0;
-export default{
+export default {
+	components:{
+		shopcart,
+		cartcontrol
+	},
 	props:{
 		seller:{
-			tupe:Object
+			type:Object
 		}
 	},
 	data(){
 		return{
 			goods:[],
+			//区间高度数组
 			listHeight:[],
 			scrollY:0
 		}
@@ -75,21 +90,26 @@ export default{
 			if(res.errno === ERR_OK){
 				this.goods = res.data
 				this.$nextTick(()=>{
+					//调用初始化方法
 					this._initScroll()
+					//计算高度
 					this._calculateHeight()
 				})
 			}
 		})
 	},
 	methods:{
+		//初始化
 		_initScroll(){
 			this.menuScroll = new BScroll(this.$refs.menuWrapper,{
 				click:true
 			});
 			this.foodsScroll = new BScroll(this.$refs.foodsWrapper,{
 				click:true,
+				//滚动的时候能实时告诉滚动的位置
 				probeType:3
 			});
+			//foodsScroll滚动
 			this.foodsScroll.on('scroll',(pos)=>{
 				//获得右侧scrollY,取正数,better插件提供实时检测滚动高度pos.y
 				this.scrollY = Math.abs(Math.round(pos.y));
@@ -99,10 +119,11 @@ export default{
 		_calculateHeight(){
 			let foodList = this.$refs.foodsWrapper.getElementsByClassName('food-list-hook')
 			let height = 0;
-			//递增的区间数组
+			//递增的区间数组,第一个高度0
 			this.listHeight.push(height);
 			for (let i = 0; i < foodList.length; i++){
 				let item = foodList[i];
+				//clienHeight获得内容区高度
 				height += item.clientHeight;
 				this.listHeight.push(height);
 			}
@@ -112,6 +133,7 @@ export default{
 			if(!event._constructed){
 				return;
 			}
+			//获得元素
 			let foodList = this.$refs.foodsWrapper.getElementsByClassName('food-list-hook')
 			let el = foodList[index]
 			this.foodsScroll.scrollToElement(el,300)
@@ -221,4 +243,8 @@ export default{
 						text-decoration:line-through
 						font-size:10px
 						color:rgba(7,17,27,0.4)
+				.cartcontrol-wrapper
+					position:absolute
+					right:0
+					bottom:12px
 </style>
