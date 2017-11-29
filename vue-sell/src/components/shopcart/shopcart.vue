@@ -1,6 +1,6 @@
 <template>
 	<div class="shopcart">
-		<div class="content">
+		<div class="content" @click="toggleList">
 			<div class="conten-left">
 				<div class="logo-wrapper" >
 					<div class="logo" :class="{'highlight':totalCount>0}">
@@ -17,18 +17,50 @@
 				</div>
 			</div>
 		</div>
+		<transition name="drop">
+			<div class="ball-container">
+				<div v-for="ball in balls" v-show="ball.show" class="ball">
+					<div class="inner"></div>
+				</div>
+			</div>
+		</transition>
+		<transition name="fold">
+			<div class="shopcart-list" v-show="listShow">
+				<div class="list-header">
+					<h1 class="title">购物车</h1>
+					<span class="empty">清空</span>
+				</div>
+				<div class="list-content">
+					<ul>
+						<li class="food border-1px" v-for="food in selectFoods">
+							<span class="name">{{food.name}}</span>
+							<div class="price">
+								<span>￥{{food.price*food.count}}</span>
+							</div>
+							<div class="cartcontrol-wrapper">
+								<cartcontrol :food="food"></cartcontrol>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</transition>
 	</div>
 </template>
 <script >
+import cartcontrol from '../cartcontrol/cartcontrol'
 export default{
+	components:{
+		cartcontrol
+	},
 	props:{
 		selectFoods:{
 			type:Array,
 			default(){
 				return [
 				{
-					price:30,
-					count:2
+					price:0,
+					count:0
 				}
 				]
 			}
@@ -44,7 +76,25 @@ export default{
 	},
 	data(){
 		return{
-
+			balls:[
+			{
+				show:false
+			},
+			{
+				show:false
+			},
+			{
+				show:false
+			},
+			{
+				show:false
+			},
+			{
+				show:false
+			}
+			],
+			dropBall:[],
+			fold:true
 		}
 	},
 	computed:{
@@ -78,11 +128,65 @@ export default{
 			}else{
 				return 'enough'
 			}
+		},
+		listShow(){
+			if(!this.totalCount){
+				this.fold = true
+				return false
+			}
+			let show = !this.fold
+			return show
+		}
+	},
+	methods:{
+		drop(rl){
+			for(let i = 0;i<this.balls.length;i++){
+				let ball = this.ball[i]
+				if(!ball.show){
+					ball.show = true
+					ball.el=el
+					ts.dropBall.push(ball)
+					return
+				}
+			}
+		},
+		toggleList(){
+			if(!this.totalCount){
+				return
+			}
+			this.fold=!this.fold
+		}
+	},
+	transition:{
+		drop:{
+			beforeEnter(el){
+				let count = this.balls.length
+				while(count--){
+					let ball = this.balls[count]
+					if(ball.show){
+						let rect = ball.el.getBoundingClientRect()
+						let x = rect.left-32
+						let y=-(window.innerHeight-rect.top-22)
+						el.style.display=''
+						el.style.webkitTransform = 'translate3d(0,${y}px,0)'
+						el.style.transform = 'translate3d(0,${y}px,0)'
+
+					}
+				}
+			},
+			enter(el){
+
+			},
+			afterEnter(el){
+
+			}
 		}
 	}
+
 }
 </script>
 <style lang="stylus" rel="stylesheet/stylus">
+@import "../../common/stylus/mixin"
 .shopcart
 	position:fixed
 	bottom:0
@@ -174,4 +278,85 @@ export default{
 				&.enough
 					background:#00b43c
 					color:#fff
+	.ball-container
+		.drop-enter-active {
+			transition: all 0.4s linear;
+		}
+		.drop-leave-active {
+			transition: all 0.4s linear;
+		}
+		.drop-enter {
+		  	 
+		}
+		.drop-leave-active {
+		  	
+		}
+		.ball
+			position:fixed
+			left:32px
+			bottom:22px
+			z-index:200
+			.inner
+				width:16px
+				height:16px
+				border-radius:50%
+				background:rgb(0,160,220)
+	
+	.shopcart-list
+		position:absolute
+		top:0
+		left:0
+		z-index:-1
+		width:100%
+		transform:translate3d(0,-100%,0)
+		&.fold-enter-active,.fold-leave-active{
+			transition: all 0.5s
+		}
+		&.fold-enter {
+		  	transform:translate3d(0,0,0)
+		}
+		&.fold-leave-active {
+		  	transform:translate3d(0,0,0)
+		}
+		.list-header
+			height:40px
+			line-height:40px
+			padding:0 18px
+			background:#f3f5f7
+			border-bottom:1px solid rgba(7,17,27,0.1)
+			.title
+				float:left
+				font-size:14px
+				color:rbg(7,17,27)
+			.empty
+				float:right
+				font-size:12px
+				color:rgb(0,160,220)
+		.list-content
+			padding:0 18px
+			max-height:217px
+			overflow:hidden
+			background:#fff
+			.food
+				position:relative
+				padding:12px 0
+				box-sizing:border-box
+				border-1px(rfgb(7,17,27,0.1))
+				.name
+					line-height:24px
+					font-size:14px
+					color:rgb(7,17,27)
+				.price
+					position:absolute
+					bottom:12px
+					right:90px
+					line-heigth:24px
+					color:rgb(240,20,20)
+					font-weight:700
+					font-size:14px
+				.cartcontrol-wrapper
+					position:absolute
+					right:0
+					bottom:6px
+
 </style>
