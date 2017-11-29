@@ -16,7 +16,7 @@
 				<li v-for="item in goods" class="food-list food-list-hook">
 					<h1 class="title">{{item.name}}</h1>
 					<ul>
-						<li v-for="food in item.foods" class="food-item border-1px">
+						<li @click="selectFood(food,$event)" v-for="food in item.foods" class="food-item border-1px">
 							<div class="icon">
 								<img :src="food.icon" width="57px" height="57px">
 							</div>
@@ -42,11 +42,13 @@
 		</div>
 		<shopcart :select-foods="selectFoods" :delivery-price="seller.deliveryPrice" 
 		:min-price="seller.minPrice" ref="shopcart"></shopcart>
+		<select-food :food="selectedFood" :show-flag="show" @on-close="hideFlag"></select-food>
 	</div>
 </template>
 <script>
 import shopcart from '../shopcart/shopcart'
 import cartcontrol from '../cartcontrol/cartcontrol'
+import selectFood from '../food/food'
 import BScroll from 'better-scroll'
 
 //import star from '../star/star'
@@ -54,7 +56,8 @@ const ERR_OK = 0;
 export default {
 	components:{
 		shopcart,
-		cartcontrol
+		cartcontrol,
+		selectFood
 	},
 	props:{
 		seller:{
@@ -66,7 +69,9 @@ export default {
 			goods:[],
 			//区间高度数组
 			listHeight:[],
-			scrollY:0
+			scrollY:0,
+			selectedFood:{},
+			show:false
 		}
 	},
 	computed:{
@@ -78,7 +83,6 @@ export default {
 				if(!height2||(this.scrollY >= height1 && this.scrollY < height2)){
 					return i
 				}
-				
 			}
 			return 0
 		},
@@ -149,6 +153,17 @@ export default {
 			let foodList = this.$refs.foodsWrapper.getElementsByClassName('food-list-hook')
 			let el = foodList[index]
 			this.foodsScroll.scrollToElement(el,300)
+		},
+		selectFood(food,event){
+			if(!event._constructed){
+				return;
+			}
+			this.selectedFood = food
+			//商品详情
+			this.show = true
+		},
+		hideFlag(){
+			this.show = false
 		}
 	}
 	

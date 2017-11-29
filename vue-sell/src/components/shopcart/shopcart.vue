@@ -1,53 +1,59 @@
 <template>
-	<div class="shopcart">
-		<div class="content" @click="toggleList">
-			<div class="conten-left">
-				<div class="logo-wrapper" >
-					<div class="logo" :class="{'highlight':totalCount>0}">
-						<i class="icon-shopping_cart" :class="{'highlight':totalCount>0}"></i>
+	<div>
+		<div class="shopcart">
+			<div class="content" @click="toggleList">
+				<div class="conten-left">
+					<div class="logo-wrapper" >
+						<div class="logo" :class="{'highlight':totalCount>0}">
+							<i class="icon-shopping_cart" :class="{'highlight':totalCount>0}"></i>
+						</div>
+						<div class="num" v-show="totalCount>0">{{totalCount}}</div>
 					</div>
-					<div class="num" v-show="totalCount>0">{{totalCount}}</div>
+					<div class="price" :class="{'highlight':totalCount>0}">￥{{totalPrice}}元</div>
+					<div class="desc">另需配送费￥{{deliveryPrice}}元</div>
 				</div>
-				<div class="price" :class="{'highlight':totalCount>0}">￥{{totalPrice}}元</div>
-				<div class="desc">另需配送费￥{{deliveryPrice}}元</div>
-			</div>
-			<div class="conten-right">
-				<div class="pay" :class="payClass">
-					{{payDes}}
+				<div class="conten-right" @click.stop.prevent="pay">
+					<div class="pay" :class="payClass">
+						{{payDes}}
+					</div>
 				</div>
 			</div>
+			<transition name="drop">
+				<div class="ball-container">
+					<div v-for="ball in balls" v-show="ball.show" class="ball">
+						<div class="inner"></div>
+					</div>
+				</div>
+			</transition>
+			<transition name="fold">
+				<div class="shopcart-list" v-show="listShow">
+					<div class="list-header">
+						<h1 class="title">购物车</h1>
+						<span class="empty" @click="empty">清空</span>
+					</div>
+					<div class="list-content" ref="listContent">
+						<ul>
+							<li class="food border-1px" v-for="food in selectFoods">
+								<span class="name">{{food.name}}</span>
+								<div class="price">
+									<span>￥{{food.price*food.count}}</span>
+								</div>
+								<div class="cartcontrol-wrapper">
+									<cartcontrol :food="food"></cartcontrol>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</transition>
 		</div>
-		<transition name="drop">
-			<div class="ball-container">
-				<div v-for="ball in balls" v-show="ball.show" class="ball">
-					<div class="inner"></div>
-				</div>
-			</div>
-		</transition>
-		<transition name="fold">
-			<div class="shopcart-list" v-show="listShow">
-				<div class="list-header">
-					<h1 class="title">购物车</h1>
-					<span class="empty">清空</span>
-				</div>
-				<div class="list-content">
-					<ul>
-						<li class="food border-1px" v-for="food in selectFoods">
-							<span class="name">{{food.name}}</span>
-							<div class="price">
-								<span>￥{{food.price*food.count}}</span>
-							</div>
-							<div class="cartcontrol-wrapper">
-								<cartcontrol :food="food"></cartcontrol>
-							</div>
-						</li>
-					</ul>
-				</div>
-			</div>
+		<transition name="fade">
+			<div class="list-mask" @click="hideList" v-show="listShow"></div>
 		</transition>
 	</div>
 </template>
 <script >
+import BScroll from 'better-scroll'
 import cartcontrol from '../cartcontrol/cartcontrol'
 export default{
 	components:{
@@ -130,11 +136,23 @@ export default{
 			}
 		},
 		listShow(){
+			//如果为0，则为折叠状态
 			if(!this.totalCount){
 				this.fold = true
 				return false
 			}
 			let show = !this.fold
+			if(show){
+				this.$nextTick(() => {
+					if(!this.scroll){
+						this.scroll = new BScroll(this.$refs.listContent,{
+							click:true
+						})
+					}else{
+						this.scroll.refresh()
+					}
+				})
+			}
 			return show
 		}
 	},
@@ -155,6 +173,20 @@ export default{
 				return
 			}
 			this.fold=!this.fold
+		},
+		empty(){
+			this.selectFoods.forEach((food)=>{
+				food.count = 0
+			})
+		},
+		hideList(){
+			this.fold = true
+		},
+		pay(){
+			if(this.totalPrice<this.minPrice){
+				return
+			}
+			window.alert('支付'+this.totalPrice+'元')
 		}
 	},
 	transition:{
@@ -309,7 +341,7 @@ export default{
 		z-index:-1
 		width:100%
 		transform:translate3d(0,-100%,0)
-		&.fold-enter-active,.fold-leave-active{
+		&.fold-enter-active,&.fold-leave-active{
 			transition: all 0.5s
 		}
 		&.fold-enter {
@@ -359,4 +391,27 @@ export default{
 					right:0
 					bottom:6px
 
+.list-mask
+	position:fixed
+	top:0
+	left:0
+	width:100%
+	height:100%
+	background:rgba(7,17,27,0.6)
+	backdrop-filter:blur(10px)
+	z-index:40
+	&.fade-enter-active {
+		transition: all 0.5s;
+	}
+	&.fade-leave-active {
+		transition: all 0.5s;
+	}
+	&.fade-enter {
+	  	opacity:0
+	    background:rgba(7,17,27,0)
+	}
+	&.fade-leave-active {
+	  	opacity:0
+	    background:rgba(7,17,27,0)
+	}
 </style>
