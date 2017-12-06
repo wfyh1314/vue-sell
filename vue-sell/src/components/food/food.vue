@@ -31,19 +31,37 @@
 					<p class="text" v-show="food.info">{{food.info}}</p>
 				</div>
 				<split></split>	
-				<div class="rating">
+				<div class="ratings">
 					<h1 class="title">商品评价</h1>
-					<ratingselect :select-type="selectType" :only-content="onlyContent" :desc="desc" :ratings="food.rating">
+					<ratingselect :select-type="selectType" :only-content="onlyContent" :desc="desc" :ratings="food.ratings" @on-selected="onSelected" @on-onlycontent="onOnlycontent">
 					</ratingselect>
 					<split></split>	
 				</div>
-
+				
+				<div class="rating-wrapper">
+					<ul v-show="food.ratings&&food.ratings.length">
+						<li v-show="needShow(rating.rateType,rating.text)" v-for="rating in food.ratings" class="rating-item border-1px">
+							<div class="user">
+								<span class="name">{{rating.username}}</span>
+								<img :src="rating.avatar" class="avatar" width="12" height="12">
+							</div>
+							<div class="time">{{rating.rateTime | formatDate}}</div>
+							<p class="text">
+								<span :class="{'icon-thumb_up':rating.rateType===0,'icon-thumb_down':rating.rateType===1}"></span>{{rating.text}}
+							</p>
+						</li>
+					</ul>
+					<div class="no-ratings" v-show="!food.ratings||!food.ratings.length">
+						暂无评价
+					</div>	
+				</div>
 			</div>
 		</div>
 	</transition>
 </template>
 <script>
 import Vue from 'vue'
+import {formatDate} from '../../common/js/date'
 import BScroll from 'better-scroll'
 import cartcontrol from '../cartcontrol/cartcontrol'
 import ratingselect from '../ratingselect/ratingselect'
@@ -99,6 +117,34 @@ import split from '../split/split'
 					return
 				}
 				Vue.set(this.food,'count',1)
+			},
+			onSelected(type){
+				this.selectType = type
+				this.$nextTick(()=>{
+					this.scroll.refresh()
+				})
+			},
+			onOnlycontent(){
+				this.onlyContent = !this.onlyContent
+			},
+			needShow(type,text){
+				//首先判断只看内容而没有文本
+				if(this.onlyContent && !text){
+					return false
+				}
+				//如果选择所有的
+				if(this.selectType === ALL){
+					return true
+				}else{
+					//判断当前type是否等于选中的状态
+					return type === this.selectType
+				}
+			}
+		},
+		filters:{
+			formatDate(time){
+				let date = new Date(time)
+				return formatDate(date,'yyyy-MM-dd hh:mm')
 			}
 		},
 		created(){
@@ -107,6 +153,7 @@ import split from '../split/split'
 	}
 </script>
 <style lang="stylus" rel="stylesheet/stylus">
+@import "../../common/stylus/mixin"
 .food
 	position:fixed
 	width:100%
@@ -195,10 +242,10 @@ import split from '../split/split'
 			background:rgb(0,160,220)
 			opacity:1
 			&.fade-enter-active {
-				transition: all 0.2s linear;
+				transition: all 0.2s linear
 			}
 			&.fade-leave-active {
-				transition: all 0.2s linear;
+				transition: all 0.2s linear
 			}
 			&.fade-enter {
 				opacity:0
@@ -206,7 +253,6 @@ import split from '../split/split'
 			&.fade-leave-active {
 				opacity:0
 			}
-	
 	.info
 		padding:18px
 		.title
@@ -219,4 +265,53 @@ import split from '../split/split'
 			padding:0 8px
 			font-size:12px
 			color:rgb(77,85,93)
+	.ratings
+		padding-top:18px
+		.title
+			line-height:14px
+			margin-bottom:6px
+			font-size:14px
+			color:rgb(7,17,27)
+			margin-left:18px
+	.rating-wrapper
+		padding:0 18px
+		.rating-item
+			position:relative
+			padding:16px 0
+			border-1px(rgba(7,17,27,0.1))
+			.user
+				position:absolute
+				right:0
+				top:16px
+				font-size:0
+				.name
+					display:inline-block
+					margin-right:6px
+					vertical-align:top
+					font-size:10px
+					color:rgb(147,153,159)
+				.avatar
+					border-radius:50%
+			.time
+				margin-bottom:6px
+				line-height:12px
+				font-size:10px
+				color:rgb(147,153,159)
+			.text
+				line-height:16px
+				font-size:12px
+				color:rgb(7,17,27)
+				.icon-thumb_up,.icon-thumb_down
+					margin-right:4px
+					line-height:16px
+					font-size:12px
+				.icon-thumb_up
+					color:rgb(0,160,220)
+				.icon-thumb_down
+					color:rgb(147,153,159)
+		.no-ratings
+			padding:16px 0
+			font-size:12px
+			color:rgb(147,153,159)
+
 </style>
