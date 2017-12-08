@@ -28,6 +28,10 @@
 						</div>
 					</li>
 				</ul>
+				<div class="favorite" @click="toggleFavorite">
+					<span :class="{'imgSC':favorite===true,'imgSCN':favorite===false}"></span>
+					<span class="text">{{favoriteText}}</span>
+				</div>
 			</div>
 			<split></split>
 			<div class="bulletin">
@@ -55,11 +59,19 @@
 					</ul>
 				</div>
 			</div>
+			<split></split>
+			<div class="info">
+				<div class="title border-1px">商家信息</div>
+				<ul>
+					<li class="info-item" v-for="info in seller.infos">{{info}}</li>
+				</ul>
+			</div>
 		</div>
 	</div>
 </template>
 
 <script>
+import {saveToLocal,loadFromLocal} from '../../common/js/store'
 import BScroll from 'better-scroll'
 import star from '../star/star'
 import split from '../split/split'
@@ -75,7 +87,14 @@ import split from '../split/split'
 		},
 		data(){
 			return{
-
+				favorite:(()=>{
+					return loadFromLocal(this.seller.id,'favorite',false)
+				})()
+			}
+		},
+		computed:{
+			favoriteText(){
+				return this.favorite ? '收藏' : '未收藏'
 			}
 		},
 		created(){
@@ -91,7 +110,7 @@ import split from '../split/split'
 			//初始化滚动区域
 			_initScroll(){
 				if (!this.scroll){
-					this.scroll=new BScroll(this.$refs.seller,{
+					this.scroll = new BScroll(this.$refs.seller,{
 						click:true
 					});
 				}else{
@@ -104,18 +123,24 @@ import split from '../split/split'
 					let margin = 6
 					let width = (picWidth+margin)*this.seller.pics.length-margin
 					this.$refs.picList.style.width = width+'px'
-					this.$nextTick(()=>{
+					this.$nextTick(() => {
 						if(!this.picScroll){
-							this.picScroll=new BScroll(this.$refs.picWrapper,{
+							this.picScroll = new BScroll(this.$refs.picWrapper,{
 								scrollX:true,
 								eventPassthrough:'vertical'
 							});
 						}else{
 							this.picScroll.refresh();
 						}
-						
 					})
 				}
+			},
+			toggleFavorite(event){
+				if (!event._constructed){
+					return
+				}
+				this.favorite = !this.favorite
+				saveToLocal(this.seller.id,'favorite',this.favorite)
 			}
 		},
 		mounted(){
@@ -135,6 +160,7 @@ import split from '../split/split'
 	overflow:hidden
 	.overview
 		padding:18px
+		position:relative
 		.title
 			font-size:14px
 			line-height:14px
@@ -175,6 +201,30 @@ import split from '../split/split'
 					color:rgb(7,17,27)
 					.stress
 						font-size:24px
+		.favorite
+			position:absolute
+			right:11px
+			top:18px
+			width:36px
+			text-align:center
+			.imgSC
+				background:url('favorite.png') no-repeat
+				background-size:cover
+				display:inline-block
+				width:25px
+				height:25px
+				margin-bottom:4px
+			.imgSCN
+				background:url('favorite-no.png') no-repeat
+				background-size:cover
+				display:inline-block
+				width:25px
+				height:25px
+				margin-bottom:4px
+			.text
+				line-height:10px
+				font-size:12px
+
 	.bulletin
 		padding:18px 18px 0 18px
 		.title
@@ -238,6 +288,20 @@ import split from '../split/split'
 					height:90px
 					&.last-child
 						margin-right:none
-			
+	.info
+		padding:18px 18px 0 18px
+		color:rgb(7,17,27)
+		.title
+			font-size:14px
+			line-height:14px
+			padding-bottom:12px
+			border-1px(rgba(7,17,27,0.1))
+		.info-item
+			padding:16px 12px
+			border-1px(rgba(7,17,27,0.1))
+			font-size:12px
+			line-height:16px
+			&.last-child
+				border-none()
 
 </style>

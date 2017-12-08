@@ -12,11 +12,14 @@
         <router-link tag="a" :to="{path: '/seller'}">商家</router-link>
       </div>
     </div>
-    <router-view :seller="seller"></router-view>
+    <keep-alive>
+      <router-view :seller="seller"></router-view>
+    </keep-alive>
   </div>
 </template>
 
 <script >
+import {urlParse} from './common/js/util'
 import header from './components/header/header'
 
 export default {
@@ -25,15 +28,19 @@ export default {
     },
     data() {
       return {
-        seller:{}
+        seller:{
+          id:1
+        }
       }
     },
     created() {
-      this.$http.get('/api/seller').then((res) => {
+      this.$http.get('/api/seller?id='+this.seller.id).then((res) => {
         res = res.body
         if (res.errno === 0){
-          this.seller = res.data
-         
+          //this.seller = res.data
+          //在id基础上添加data属性
+          this.seller = Object.assign({},this.seller,res.data)
+          console.log(this.seller.id)
         }
       });
     }
